@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Admission Prediction</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .input-section {
+            flex: 1;
+             gap: 20px;
+        }
+
+        .output-section {
+            flex: 1;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .result-container {
+            border-left: 5px solid;
+        }
+
+        .admitted {
+            border-color: #2ecc71;
+            background-color: rgba(46, 204, 113, 0.1);
+        }
+
+        .not-admitted {
+            border-color: #e74c3c;
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+
+        .subject-score {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .score-bar {
+            height: 20px;
+            background-color: #eee;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2ecc71, #27ae60);
+        }
+
+        .fail {
+            background: linear-gradient(90deg, #e74c3c, #c0392b);
+        }
+
+        .recommended-program {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #eee;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+        }
+
+        .tab.active {
+            background-color: #6a11cb;
+            color: white;
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        .subject-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .subject-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .subject-input-group select {
+            flex: 2;
+        }
+
+        .subject-input-group input {
+            flex: 1;
+        }
+
+        .add-subject-btn {
+            margin-top: 10px;
+            background: #27ae60;
+        }
+
+        .remove-subject-btn {
+            background: #e74c3c;
+            padding: 5px 10px;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .project-info {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #6a11cb;
+        }
+
+        .user-info {
+            margin-bottom: 20px;
+        }
+
+        .user-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .generate-pdf-btn {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+        }
+
+        .result-title {
+            color: #6a11cb;
+            margin-bottom: 15px;
+        }
+
+        .result-message {
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* New styles for multi-step form */
+        .form-step {
+            display: none;
+        }
+
+        .form-step.active {
+            display: block;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .back-btn {
+            background: #95a5a6;
+        }
+
+        .next-btn {
+            background: #3498db;
+        }
+
+        .progress-bar {
+            height: 5px;
+            background-color: #ecf0f1;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #6a11cb, #2575fc);
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h1>Student Admission Prediction</h1>
+        <p>Predict admission status based on academic performance</p>
+    </div>
+
+    <div class="container">
+        <div class="input-section">
+            <div class="card">
+                <div class="progress-bar">
+                    <div class="progress" id="form-progress" style="width: 25%;"></div>
+                </div>
+
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('reb')">REB Prediction</div>
+                    <div class="tab" onclick="switchTab('rtb')">RTB Prediction</div>
+                </div>
+
+                <div id="reb-form" class="form-section active">
+                    <!-- Step 1: Personal Information -->
+                    <div id="reb-step1" class="form-step active">
+                        <h2>Personal Information</h2>
+                        <div class="user-info-grid">
+                            <div class="form-group" style="display: flex; align-items: center; gap: 17px;">
+                                <label for="nid" style="min-width: 150px;">National ID (NID):</label>
+                                <input type="number" id="reb-nid" style="width: 300px;" maxlength="16" placeholder="Enter NID"
+                                    required>
+
+
+                            </div>
+                            <br>
+                            <div class="form-group" style="display: flex; align-items: center; gap: 17px;">
+                                <label for="fname" style="min-width: 150px;">First Name:</label>
+                                <input type="text" id="reb-fname" placeholder="Enter first name" required>
+                            </div>
+                            <br>
+                            <div class="form-group" style="display: flex; align-items: center; gap: 17px;">
+                                <label for="lname" style="min-width: 150px;">Last Name:</label>
+                                <input type="text" id="reb-lname" placeholder="Enter last name" required>
+                            </div>
+                            <br>
+                            <div class="form-group" style="display: flex; align-items: center; gap: 17px;">
+                                <label for="email"  style="min-width: 150px;">Email:</label>
+                                <input type="email" id="reb-email" placeholder="Enter email" required>
+                            </div>
+                            <br>
+                            <div class="form-group"style="display: flex; align-items: center; gap: 17px;">
+                                <label for="phone"  style="min-width: 150px;">Phone Number:</label>
+                                <input id="reb-phone" type="number" minlength="10" maxlength="10" placeholder="Enter phone number" required>
+                            </div>
+                        </div>
+                        <div class="navigation-buttons">
+                            <button class="back-btn" disabled>Back</button>
+                            <button class="next-btn" onclick="nextStep('reb', 1)">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Combination -->
+                    <div id="reb-step2" class="form-step">
+                        <h2>Combination Information</h2>
+                        <div class="form-group">
+                            <label for="reb-combination">Combination</label>
+                            <select id="reb-combination" onchange="updateRebSubjects()" required>
+                                <option value="">Select Combination</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Subjects</label>
+                            <div id="reb-subject-inputs" class="subject-inputs">
+                                <!-- Subject inputs will be added here -->
+                            </div>
+                        </div>
+                        <div class="navigation-buttons">
+                            <button class="back-btn" onclick="prevStep('reb', 2)">Back</button>
+                            <button class="next-btn" onclick="nextStep('reb', 2)">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Additional Information -->
+                    <div id="reb-step3" class="form-step">
+                        <h2>Additional Information</h2>
+                        <div class="form-group">
+                            <label for="reb-year">Completion Year</label>
+                            <input type="number" id="reb-year" min="2010" max="2025" value="2024" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reb-skills">Has Trade Skills</label>
+                            <select id="reb-skills" required>
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" hidden>
+                            <label for="reb-fee" >Application Fee Paid</label>
+                            <select id="reb-fee" required>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="reb-program">Program Choice</label>
+                            <select id="reb-program" required>
+                                <option value="">Select Program</option>
+                            </select>
+                        </div>
+                        <div class="navigation-buttons">
+                            <button class="back-btn" onclick="prevStep('reb', 3)">Back</button>
+                            <button id="predict-reb-btn" onclick="predictReb()">Predict Admission</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="rtb-form" class="form-section">
+                    <!-- Step 1: Personal Information -->
+                    <div id="rtb-step1" class="form-step active">
+                        <h2>Personal Information</h2>
+                        <div class="user-info-grid">
+                            <div class="form-group" style="display: flex; align-items: center; gap: 17px;">
+                                <label for="nid" style="min-width: 150px;">National ID (NID):</label>
+
+                                <input type="number" id="rtb-nid" name="nid" style="width: 300px;" maxlength="16" minlength="16"
+                                    placeholder="Enter NID" required>
+                            </div>
+                            <br>
+                            <div class="form-group" style="display: flex; align-items: center; gap: 17px;">
+                                <label for="fname" style="min-width: 150px;">First Name:</label>
+                                <input type="text" id="rtb-fname" placeholder="Enter first name" required>
+                            </div>
+                            <br>
+                            <div class="form-group" style="display: flex; align-items: center; gap: 17px;">
+                                <label for="lname" style="min-width: 150px;">Last Name:</label>
+                                <input type="text" id="rtb-lname" placeholder="Enter last name" required>
+                            </div>
+                            <br>
+                            <div class="form-group" style="display: flex; align-items: center; gap: 17px;">
+                                <label for="email" style="min-width: 150px;">Email:</label>
+                                <input type="email" id="rtb-email" placeholder="Enter email" required>
+                            </div>
+                            <br>
+                            <div class="form-group" style="display: flex; align-items: center; gap: 17px;">
+                                <label for="phone" style="min-width: 150px;">Phone Number:</label>
+                                <input type="tel" id="rtb-phone" placeholder="Enter phone number" required>
+                            </div>
+                        </div>
+                        <div class="navigation-buttons">
+                            <button class="back-btn" disabled>Back</button>
+                            <button class="next-btn" onclick="nextStep('rtb', 1)">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Combination -->
+                    <div id="rtb-step2" class="form-step">
+                        <h2>Combination Information</h2>
+                        <div class="form-group">
+                            <label for="rtb-combination">Combination</label>
+                            <select id="rtb-combination" onchange="updateRtbSubjects()" required>
+                                <option value="">Select Combination</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Subjects</label>
+                            <div id="rtb-subject-inputs" class="subject-inputs">
+                                <!-- Subject inputs will be added here -->
+                            </div>
+                            <button type="button" class="add-subject-btn" onclick="addRtbSubject()">+ Add
+                                Subject</button>
+                        </div>
+                        <div class="navigation-buttons">
+                            <button class="back-btn" onclick="prevStep('rtb', 2)">Back</button>
+                            <button class="next-btn" onclick="nextStep('rtb', 2)">Next</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Additional Information -->
+                    <div id="rtb-step3" class="form-step">
+                        <h2>Additional Information</h2>
+                        <div class="form-group">
+                            <label for="rtb-year">Completion Year</label>
+                            <input type="number" id="rtb-year" min="2010" max="2025" value="2024" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="rtb-skills">Has Trade Skills</label>
+                            <select id="rtb-skills" required>
+                                <option value="0">No</option>
+                                <option value="1">Yes</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="display: none;">
+                            <label for="rtb-fee">Application Fee Paid</label>
+                            <select id="rtb-fee" required>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label for="rtb-program">Program Choice</label>
+                            <select id="rtb-program" required>
+                                <option value="">Select Program</option>
+                            </select>
+                        </div>
+                        <div class="navigation-buttons">
+                            <button class="back-btn" onclick="prevStep('rtb', 3)">Back</button>
+                            <button id="predict-rtb-btn" onclick="predictRtb()">Predict Admission</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <div id="project-info" class="project-info">
+                <h2>About This Project</h2>
+                <p>This Student Admission Prediction system helps students determine their likelihood of admission to
+                    various academic programs based on their academic performance and other relevant factors.</p>
+                <p>The system uses machine learning algorithms to analyze historical admission data and provide accurate
+                    predictions. It considers factors such as subject scores, combination, program choice, and
+                    additional qualifications.</p>
+                <p>Results are displayed with detailed analysis and recommendations for alternative programs if needed.
+                </p>
+            </div>
+
+            <div id="result-container" class="card result-container" style="display: none;">
+                <h2 class="result-title" id="result-title">Prediction Results</h2>
+                <p class="result-message" id="result-message"></p>
+
+                <h3>Subject Performance</h3>
+                <div id="subject-performance">
+                    <!-- Subject performance bars will be added here -->
+                </div>
+
+                <h3>Recommended Programs</h3>
+                <div id="recommended-programs">
+                    <!-- Recommended programs will be added here -->
+                </div>
+
+                <button id="generate-pdf-btn" class="generate-pdf-btn" onclick="generatePDF()">Generate PDF
+                    Report</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+        const API_BASE = 'http://localhost:5000';
+        let rebSubjects = {};
+        let rtbSubjects = {};
+        let rebPrograms = [];
+        let rtbPrograms = [];
+        let currentPredictionResult = null;
+        let originalButtonText = '';
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', async function () {
+            await loadCombinations();
+            await loadPrograms();
+            updateRebSubjects();
+            updateRtbSubjects();
+        });
+
+        // Form navigation functions
+        function nextStep(formType, currentStep) {
+            // Validate current step before proceeding
+            if (!validateStep(formType, currentStep)) {
+                return;
+            }
+
+            // Hide current step
+            document.getElementById(`${formType}-step${currentStep}`).classList.remove('active');
+            // Show next step
+            document.getElementById(`${formType}-step${currentStep + 1}`).classList.add('active');
+
+            // Update progress bar
+            const progressPercentage = ((currentStep) / 3) * 100;
+            document.getElementById('form-progress').style.width = `${progressPercentage}%`;
+        }
+
+        function prevStep(formType, currentStep) {
+            // Hide current step
+            document.getElementById(`${formType}-step${currentStep}`).classList.remove('active');
+            // Show previous step
+            document.getElementById(`${formType}-step${currentStep - 1}`).classList.add('active');
+
+            // Update progress bar
+            const progressPercentage = ((currentStep - 2) / 3) * 100;
+            document.getElementById('form-progress').style.width = `${progressPercentage}%`;
+        }
+
+        function validateStep(formType, step) {
+            if (step === 1) {
+                // Validate personal information
+                const requiredFields = [
+                    document.getElementById(`${formType}-nid`),
+            document.getElementById(`${formType}-fname`),
+            document.getElementById(`${formType}-lname`),
+            document.getElementById(`${formType}-email`),
+            document.getElementById(`${formType}-phone`)
+                ];
+
+                for (const field of requiredFields) {
+                    if (!field.value) {
+                        alert(`Please fill in all required fields: ${field.previousElementSibling.textContent}`);
+                        field.focus();
+                        return false;
+                    }
+                }
+                return true;
+            } else if (step === 2) {
+                // Validate combination and subjects
+                const combination = document.getElementById(`${formType}-combination`).value;
+                if (!combination) {
+                    alert('Please select a combination');
+                    return false;
+                }
+
+                // Validate subject scores
+                const subjectGroups = document.getElementById(`${formType}-subject-inputs`).children;
+                for (let group of subjectGroups) {
+                    const score = parseFloat(group.querySelector('input').value);
+                    if (isNaN(score)) {
+                        alert('Please enter valid scores for all subjects');
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            return true;
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+
+            // Hide all steps and reset to step 1
+            document.querySelectorAll('.form-step').forEach(step => step.classList.remove('active'));
+
+            if (tab === 'reb') {
+                document.querySelector('.tab:nth-child(1)').classList.add('active');
+                document.getElementById('reb-form').classList.add('active');
+                document.getElementById('reb-step1').classList.add('active');
+            } else {
+                document.querySelector('.tab:nth-child(2)').classList.add('active');
+                document.getElementById('rtb-form').classList.add('active');
+                document.getElementById('rtb-step1').classList.add('active');
+            }
+
+            // Reset progress bar
+            document.getElementById('form-progress').style.width = '25%';
+        }
+
+        async function loadCombinations() {
+            try {
+                const response = await fetch(`${API_BASE}/get_combinations`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+
+                const rebCombinationSelect = document.getElementById('reb-combination');
+                data.reb_combinations.forEach(comb => {
+                    const option = document.createElement('option');
+                    option.value = comb;
+                    option.textContent = comb;
+                    rebCombinationSelect.appendChild(option);
+                });
+
+                const rtbCombinationSelect = document.getElementById('rtb-combination');
+                data.rtb_combinations.forEach(comb => {
+                    const option = document.createElement('option');
+                    option.value = comb;
+                    option.textContent = comb;
+                    rtbCombinationSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading combinations:', error);
+                alert('Failed to load combinations. Please refresh the page.');
+            }
+        }
+
+        async function loadPrograms() {
+            try {
+                // Load REB programs
+                const rebProgramSelect = document.getElementById('reb-program');
+                rebProgramSelect.innerHTML = '<option value="">Select Program</option>';
+
+                // Load RTB programs
+                const rtbProgramSelect = document.getElementById('rtb-program');
+                rtbProgramSelect.innerHTML = '<option value="">Select Program</option>';
+
+                // Get programs for each combination
+                const rebCombinationSelect = document.getElementById('reb-combination');
+                const rtbCombinationSelect = document.getElementById('rtb-combination');
+
+                // Add event listeners to update programs when combination changes
+                rebCombinationSelect.addEventListener('change', async function () {
+                    const comb = this.value;
+                    if (!comb) return;
+
+                    try {
+                        const response = await fetch(`${API_BASE}/get_programs/${comb}`);
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const data = await response.json();
+
+                        rebProgramSelect.innerHTML = '<option value="">Select Program</option>';
+                        data.programs.forEach(program => {
+                            const option = document.createElement('option');
+                            option.value = program;
+                            option.textContent = program;
+                            rebProgramSelect.appendChild(option);
+                        });
+                    } catch (error) {
+                        console.error('Error loading programs:', error);
+                        alert('Failed to load programs for this combination');
+                    }
+                });
+
+                rtbCombinationSelect.addEventListener('change', async function () {
+                    const comb = this.value;
+                    if (!comb) return;
+
+                    try {
+                        const response = await fetch(`${API_BASE}/get_programs/${comb}`);
+                        if (!response.ok) throw new Error('Network response was not ok');
+                        const data = await response.json();
+
+                        rtbProgramSelect.innerHTML = '<option value="">Select Program</option>';
+                        data.programs.forEach(program => {
+                            const option = document.createElement('option');
+                            option.value = program;
+                            option.textContent = program;
+                            rtbProgramSelect.appendChild(option);
+                        });
+                    } catch (error) {
+                        console.error('Error loading programs:', error);
+                        alert('Failed to load programs for this combination');
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading programs:', error);
+                alert('Failed to load programs. Please refresh the page.');
+            }
+        }
+
+        async function updateRebSubjects() {
+            const combination = document.getElementById('reb-combination').value;
+            if (!combination) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/get_subjects/${combination}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+
+                const subjectInputs = document.getElementById('reb-subject-inputs');
+                subjectInputs.innerHTML = '';
+
+                data.subjects.forEach((subject, index) => {
+                    if (index >= 3) return; // REB only has 3 principal subjects
+
+                    const subjectGroup = document.createElement('div');
+                    subjectGroup.className = 'subject-input-group';
+
+                    const subjectSelect = document.createElement('select');
+                    subjectSelect.disabled = true;
+                    subjectSelect.required = true;
+
+                    const option = document.createElement('option');
+                    option.value = subject;
+                    option.textContent = subject;
+                    subjectSelect.appendChild(option);
+
+                    const scoreInput = document.createElement('input');
+                    scoreInput.type = 'number';
+                    scoreInput.min = '0';
+                    scoreInput.max = '100';
+                    scoreInput.placeholder = 'Score';
+                    scoreInput.value = '70';
+                    scoreInput.required = true;
+
+                    subjectGroup.appendChild(subjectSelect);
+                    subjectGroup.appendChild(scoreInput);
+                    subjectInputs.appendChild(subjectGroup);
+                });
+            } catch (error) {
+                console.error('Error loading subjects:', error);
+                alert('Failed to load subjects for this combination');
+            }
+        }
+
+        async function updateRtbSubjects() {
+            const combination = document.getElementById('rtb-combination').value;
+            if (!combination) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/get_subjects/${combination}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+                rtbSubjects = data.subjects;
+
+                const subjectInputs = document.getElementById('rtb-subject-inputs');
+                subjectInputs.innerHTML = '';
+
+                // Add first 5 subjects by default for RTB
+                for (let i = 0; i < Math.min(5, data.subjects.length); i++) {
+                    addRtbSubjectInput(data.subjects[i]);
+                }
+            } catch (error) {
+                console.error('Error loading subjects:', error);
+                alert('Failed to load subjects for this combination');
+            }
+        }
+
+        function addRtbSubjectInput(subject = '') {
+            const subjectInputs = document.getElementById('rtb-subject-inputs');
+
+            const subjectGroup = document.createElement('div');
+            subjectGroup.className = 'subject-input-group';
+
+            const subjectSelect = document.createElement('select');
+            subjectSelect.required = true;
+
+            // Add all available subjects for this combination as options
+            if (rtbSubjects && rtbSubjects.length > 0) {
+                rtbSubjects.forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub;
+                    option.textContent = sub;
+                    subjectSelect.appendChild(option);
+                });
+            }
+
+            if (subject) {
+                subjectSelect.value = subject;
+            }
+
+            const scoreInput = document.createElement('input');
+            scoreInput.type = 'number';
+            scoreInput.min = '0';
+            scoreInput.max = '100';
+            scoreInput.placeholder = 'Score';
+            scoreInput.value = '70';
+            scoreInput.required = true;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'remove-subject-btn';
+            removeBtn.textContent = '×';
+            removeBtn.onclick = function () {
+                subjectInputs.removeChild(subjectGroup);
+            };
+
+            subjectGroup.appendChild(subjectSelect);
+            subjectGroup.appendChild(scoreInput);
+            subjectGroup.appendChild(removeBtn);
+            subjectInputs.appendChild(subjectGroup);
+        }
+
+        function addRtbSubject() {
+            addRtbSubjectInput();
+        }
+
+        async function predictReb() {
+            // Validate required fields
+            const requiredFields = [
+                document.getElementById('reb-nid'),
+                document.getElementById('reb-fname'),
+                document.getElementById('reb-lname'),
+                document.getElementById('reb-email'),
+                document.getElementById('reb-phone'),
+                document.getElementById('reb-combination'),
+                document.getElementById('reb-program')
+            ];
+
+            for (const field of requiredFields) {
+                if (!field.value) {
+                    alert(`Please fill in all required fields: ${field.previousElementSibling.textContent}`);
+                    field.focus();
+                    return;
+                }
+            }
+
+            const combination = document.getElementById('reb-combination').value;
+            const year = document.getElementById('reb-year').value;
+            const skills = document.getElementById('reb-skills').value;
+            const fee = document.getElementById('reb-fee').value;
+            const program = document.getElementById('reb-program').value;
+
+            // Get subject scores
+            const subjectGroups = document.getElementById('reb-subject-inputs').children;
+            const subjectScores = [];
+
+            for (let group of subjectGroups) {
+                const subject = group.querySelector('select').value;
+                const score = parseFloat(group.querySelector('input').value);
+                if (isNaN(score)) {
+                    alert('Please enter valid scores for all subjects');
+                    return;
+                }
+                subjectScores.push([subject, score]);
+            }
+
+            const studentData = {
+                combination,
+                completed_year: parseInt(year),
+                has_trade_skills: parseInt(skills),
+                application_fee_paid: parseInt(fee),
+                program_choice: program,
+                is_tvet: 0,
+                subject_scores: subjectScores
+            };
+
+            await makePrediction(studentData, 'predict-reb-btn');
+        }
+
+        async function predictRtb() {
+            // Validate required fields
+            const requiredFields = [
+                document.getElementById('rtb-nid'),
+                document.getElementById('rtb-fname'),
+                document.getElementById('rtb-lname'),
+                document.getElementById('rtb-email'),
+                document.getElementById('rtb-phone'),
+                document.getElementById('rtb-combination'),
+                document.getElementById('rtb-program')
+            ];
+
+            for (const field of requiredFields) {
+                if (!field.value) {
+                    alert(`Please fill in all required fields: ${field.previousElementSibling.textContent}`);
+                    field.focus();
+                    return;
+                }
+            }
+
+            const combination = document.getElementById('rtb-combination').value;
+            const year = document.getElementById('rtb-year').value;
+            const skills = document.getElementById('rtb-skills').value;
+            const fee = document.getElementById('rtb-fee').value;
+            const program = document.getElementById('rtb-program').value;
+
+            // Get subject scores
+            const subjectGroups = document.getElementById('rtb-subject-inputs').children;
+            const subjectScores = [];
+
+            for (let group of subjectGroups) {
+                const subject = group.querySelector('select').value;
+                const score = parseFloat(group.querySelector('input').value);
+                if (isNaN(score)) {
+                    alert('Please enter valid scores for all subjects');
+                    return;
+                }
+                if (subject && !isNaN(score)) {
+                    subjectScores.push([subject, score]);
+                }
+            }
+
+            if (subjectScores.length < 5) {
+                alert('RTB requires at least 5 subjects');
+                return;
+            }
+
+            const studentData = {
+                combination,
+                completed_year: parseInt(year),
+                has_trade_skills: parseInt(skills),
+                application_fee_paid: parseInt(fee),
+                program_choice: program,
+                is_tvet: 1,
+                subject_scores: subjectScores
+            };
+
+            await makePrediction(studentData, 'predict-rtb-btn');
+        }
+
+        async function makePrediction(studentData, buttonId) {
+            try {
+                // Show loading state
+                const predictBtn = document.getElementById(buttonId);
+                originalButtonText = predictBtn.textContent;
+                predictBtn.innerHTML = `<span class="loading"></span>Processing...`;
+                predictBtn.disabled = true;
+
+                document.getElementById('project-info').style.display = 'none';
+                document.getElementById('result-container').style.display = 'none';
+
+                const response = await fetch(`${API_BASE}/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(studentData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                currentPredictionResult = result;
+                displayResult(result);
+            } catch (error) {
+                console.error('Prediction error:', error);
+                alert('Error making prediction. Please try again.');
+                document.getElementById('project-info').style.display = 'block';
+            } finally {
+                // Restore button state
+                const predictBtn = document.getElementById(buttonId);
+                predictBtn.textContent = originalButtonText;
+                predictBtn.disabled = false;
+            }
+        }
+
+        function displayResult(result) {
+            const resultContainer = document.getElementById('result-container');
+            const resultTitle = document.getElementById('result-title');
+            const resultMessage = document.getElementById('result-message');
+            const subjectPerformance = document.getElementById('subject-performance');
+            const recommendedPrograms = document.getElementById('recommended-programs');
+
+            // Clear previous results
+            subjectPerformance.innerHTML = '';
+            recommendedPrograms.innerHTML = '';
+
+            // Set status and style
+            if (result.admission_status === 'Admitted') {
+                resultContainer.className = 'card result-container admitted';
+                resultTitle.textContent = 'Admitted';
+                resultTitle.style.color = '#2ecc71';
+            } else {
+                resultContainer.className = 'card result-container not-admitted';
+                resultTitle.textContent = 'Not Admitted';
+                resultTitle.style.color = '#e74c3c';
+            }
+
+            resultMessage.textContent = result.message;
+
+            // Display subject performance
+            for (let i = 0; i < result.subject_names.length; i++) {
+                const subject = result.subject_names[i];
+                const score = result.scores[i];
+
+                const subjectDiv = document.createElement('div');
+                subjectDiv.className = 'subject-score';
+
+                const nameSpan = document.createElement('span');
+                nameSpan.textContent = subject;
+
+                const scoreSpan = document.createElement('span');
+                scoreSpan.textContent = score;
+
+                subjectDiv.appendChild(nameSpan);
+                subjectDiv.appendChild(scoreSpan);
+
+                const barContainer = document.createElement('div');
+                barContainer.className = 'score-bar';
+
+                const barFill = document.createElement('div');
+                barFill.className = 'score-fill';
+                if (score < 50) barFill.classList.add('fail');
+                barFill.style.width = `${score}%`;
+
+                barContainer.appendChild(barFill);
+
+                subjectPerformance.appendChild(subjectDiv);
+                subjectPerformance.appendChild(barContainer);
+            }
+
+            // Display recommended programs
+            if (result.recommended_programs && result.recommended_programs.length > 0) {
+                result.recommended_programs.forEach((program, index) => {
+                    const programDiv = document.createElement('div');
+                    programDiv.className = 'recommended-program';
+
+                    programDiv.textContent = `${index + 1}. ${program}`;
+
+                    recommendedPrograms.appendChild(programDiv);
+                });
+            } else {
+                recommendedPrograms.textContent = 'No recommended programs available';
+            }
+
+            // Show result container
+            resultContainer.style.display = 'block';
+        }
+function generatePDF() {
+    if (!currentPredictionResult) {
+        alert('No prediction results available to generate PDF');
+        return;
+    }
+
+    try {
+        let formType = null;
+        if (document.getElementById('reb-form')?.classList.contains('active')) {
+            formType = 'reb';
+        } else if (document.getElementById('rtb-form')?.classList.contains('active')) {
+            formType = 'rtb';
+        } else {
+            alert('No active form found!');
+            return;
+        }
+
+        const doc = new jsPDF();
+
+        // Document properties
+        doc.setProperties({
+            title: 'Admission Prediction Report',
+            subject: 'Student Admission Prediction Results',
+            author: 'Admission Prediction System',
+            creator: 'Admission Prediction System'
+        });
+
+        doc.setFontSize(20);
+        doc.setTextColor(106, 17, 203);
+        doc.text('Student Admission Prediction Report', 105, 20, { align: 'center' });
+
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        doc.text('Student Information:', 14, 40);
+
+        const nid = document.getElementById(`${formType}-nid`)?.value || 'Not provided';
+        const fname = document.getElementById(`${formType}-fname`)?.value || 'Not provided';
+        const lname = document.getElementById(`${formType}-lname`)?.value || 'Not provided';
+        const email = document.getElementById(`${formType}-email`)?.value || 'Not provided';
+        const phone = document.getElementById(`${formType}-phone`)?.value || 'Not provided';
+
+        doc.text(`National ID: ${nid}`, 14, 50);
+        doc.text(`Name: ${fname} ${lname}`, 14, 60);
+        doc.text(`Email: ${email}`, 105, 50);
+        doc.text(`Phone: ${phone}`, 105, 60);
+
+        // Prediction result
+        doc.setFontSize(16);
+        const statusColor = currentPredictionResult.admission_status === 'Admitted' ? [46, 204, 113] : [231, 76, 60];
+        doc.setTextColor(...statusColor);
+        doc.text(`Admission Status: ${currentPredictionResult.admission_status}`, 14, 80);
+
+        doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0);
+        const splitMessage = doc.splitTextToSize(currentPredictionResult.message, 180);
+        doc.text(splitMessage, 14, 90);
+
+        // === Subject Performance Section ===
+        doc.text('Subject Performance:', 14, 120);
+        let yPos = 130;
+        let column = 1;
+
+        for (let i = 0; i < currentPredictionResult.subject_names.length; i++) {
+            const subject = currentPredictionResult.subject_names[i];
+            const score = currentPredictionResult.scores[i];
+            const xPos = column === 1 ? 14 : 105;
+
+            doc.text(`${subject}: ${score}%`, xPos, yPos);
+
+            column = column === 1 ? 2 : 1;
+            if (column === 1) yPos += 10;
+
+            if (yPos > 270) {
+                doc.addPage();
+                yPos = 20;
+                column = 1;
+            }
+        }
+
+        // Finish subject section properly
+        if (column === 2) {
+            yPos += 10; // complete the row
+        }
+
+        // === Ensure clean space before Recommended Programs ===
+        yPos += 15;
+        if (yPos > 270) {
+            doc.addPage();
+            yPos = 20;
+        }
+
+        // === Recommended Programs Section ===
+        if (currentPredictionResult.recommended_programs?.length > 0) {
+            doc.text('Recommended Programs:', 14, yPos);
+            yPos += 10;
+
+            let xPos = 14;
+            let itemCount = 0;
+
+            currentPredictionResult.recommended_programs.forEach((program, index) => {
+                if (yPos > 280) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                doc.text(`${index + 1}. ${program}`, xPos, yPos);
+                yPos += 10;
+                itemCount++;
+            });
+        }
+
+        // === Footer ===
+        doc.setFontSize(10);
+        doc.setTextColor(150, 150, 150);
+        doc.text('Generated by Student Admission Prediction System', 105, 290, { align: 'center' });
+
+        // === Save file ===
+        const safeFname = fname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+        const safeLname = lname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+        const fileName = `Admission_Prediction_${safeFname}_${safeLname}.pdf`;
+
+        doc.save(fileName);
+    } catch (error) {
+        console.error('PDF Generation Error:', error);
+        alert('Failed to generate PDF. Please try again.');
+    }
+}
+
+    </script>
+</body>
+
+</html>
